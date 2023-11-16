@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 import os
 import pika
 from celery import Celery
+from celery.result import AsyncResult
 
 # 직접 gpt2 모델을 파인튜닝하기 위한 라이브러리
 from pydantic import BaseModel
@@ -113,27 +114,31 @@ async def call_colab_llama(request: Request):
 
 ###########################################################################
 ###########################################################################
-class GPTRequest(BaseModel):
-    input_text: str
-    mlp_weight: float
-    attn_weight: float
-    eps_weight: float
-    url: str = colab_url
+
 
 @router.post("/gpt")
-def send_message(request: GPTRequest):
+async def send_message(request: Request):
+    # JSON 데이터 추출
+    json_data = await request.json()
+    print(json_data)
     # Celery 작업 호출
-    task = celery_app.send_task('tasks.gpt', args=[request])
+    task = celery_app.send_task('tasks.gpt', args=[json_data, colab_url])
     return {"message": "Task sent", "task_id": task.id}
 
 @router.post("/llama")
-def receive_message():
-    task = celery_app.send_task('tasks.llama', args=[])
+async def receive_message(request: Request):
+     # JSON 데이터 추출
+    json_data = await request.json()
+    print(json_data)
+    # Celery 작업 호출
+    task = celery_app.send_task('tasks.llama', args=[json_data, colab_url])
+    return {"message": "Task sent", "task_id": task.id}
 
-
-
-
-
-
+@router.get("/logs")
+async def get_logs():
+    task = celery_app.send_task('tasks.getLogs', args=[])
+    result = AsyncResult(task.id).get(timeout=10)  # 여기서 10초 동안 결과를 기다립니다.
+    return result
 
 app.include_router(router, prefix="/api")  # "/api" 접두사와 함께 router를 app에 포함
+
