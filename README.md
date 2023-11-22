@@ -249,4 +249,4 @@ $ npm start
 - 박현우 - Hyunwoo Park - [Front]
 - 손민균 - Minkyun Son - [Back]
 - 이상혁 - Sanghyuk Lee - [Back]
-- 이현근 - Yongwoo Jeong - [Back]
+- 이현근 - Hyungeun Lee - [Back]
